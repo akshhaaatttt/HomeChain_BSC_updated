@@ -73,16 +73,19 @@ export function useUserRoles(): UserRoles & { loading: boolean; error?: Error } 
             address: CONTRACT_ADDRESS,
             abi: CONTRACT_ABI,
             functionName: 'SUPER_ADMIN_ROLE',
+            authorizationList: [],
           }),
           publicClient.readContract({
             address: CONTRACT_ADDRESS,
             abi: CONTRACT_ABI,
             functionName: 'ROOM_ADMIN_ROLE',
+            authorizationList: [],
           }),
           publicClient.readContract({
             address: CONTRACT_ADDRESS,
             abi: CONTRACT_ABI,
             functionName: 'GUEST_ROLE',
+            authorizationList: [],
           }),
         ])
 
@@ -92,18 +95,21 @@ export function useUserRoles(): UserRoles & { loading: boolean; error?: Error } 
             abi: CONTRACT_ABI,
             functionName: 'hasRole',
             args: [superAdminRole, address],
+            authorizationList: [],
           }),
           publicClient.readContract({
             address: CONTRACT_ADDRESS,
             abi: CONTRACT_ABI,
             functionName: 'hasRole',
             args: [roomAdminRole, address],
+            authorizationList: [],
           }),
           publicClient.readContract({
             address: CONTRACT_ADDRESS,
             abi: CONTRACT_ABI,
             functionName: 'hasRole',
             args: [guestRole, address],
+            authorizationList: [],
           }),
         ])
 

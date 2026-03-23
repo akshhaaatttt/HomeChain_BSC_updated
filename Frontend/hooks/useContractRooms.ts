@@ -42,6 +42,7 @@ export function useContractRooms() {
           address: CONTRACT_ADDRESS,
           abi: CONTRACT_ABI,
           functionName: 'roomCount',
+          authorizationList: [],
         })
 
         const nextRooms: ContractRoom[] = []
@@ -51,6 +52,7 @@ export function useContractRooms() {
             abi: CONTRACT_ABI,
             functionName: 'getRoomInfo',
             args: [BigInt(roomId)],
+            authorizationList: [],
           })
 
           const [name, espIP, deviceCount, exists] = roomInfo as [string, string, bigint, boolean]
