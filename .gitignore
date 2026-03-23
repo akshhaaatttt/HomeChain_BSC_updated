@@ -1,0 +1,57 @@
+# ---- Dependencies ----
+node_modules/
+Frontend/node_modules/
+
+# ---- Package managers ----
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# ---- Environment / secrets ----
+.env
+.env.*
+!.env.example
+
+# ---- Hardhat / Solidity build artifacts ----
+artifacts/
+cache/
+out/
+typechain/
+typechain-types/
+coverage/
+coverage.json
+.solc-imports/
+
+# ---- Next.js / frontend build output ----
+Frontend/.next/
+Frontend/out/
+Frontend/.turbo/
+Frontend/.vercel/
+Frontend/.swc/
+Frontend/coverage/
+Frontend/dist/
+Frontend/build/
+
+# ---- Generic build output ----
+dist/
+build/
+
+# ---- Go ----
+*.exe
+*.dll
+*.so
+*.dylib
+*.test
+*.out
+
+# ---- OS / editor ----
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# ---- Logs ----
+*.log
