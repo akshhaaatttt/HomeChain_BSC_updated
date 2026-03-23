@@ -1,73 +1,86 @@
 /**
- * Contract Configuration
- * Contains ABI and contract address for HomeAutomation.sol
- * 
- * IMPORTANT: Update CONTRACT_ADDRESS with your deployed contract address on Anvil
- * Deploy format: npx hardhat run scripts/deploy.js --network anvil
- * 
- * From go-middleware: contractAddr := common.HexToAddress("0x5FbDB2315678afecb367f032d93F642f64180aa3")
+ * Contract configuration aligned with src/HomeAutomation.sol and home-middleware bindings.
  */
 
-export const CONTRACT_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3' as `0x${string}`;
-// VERIFIED: This matches the address in home-middleware/main.go
-// If deploying fresh, update this value from deployment output
+const DEFAULT_CONTRACT_ADDRESS = '0x5FbDB2315678afecb367f032d93F642f64180aa3'
+
+const resolvedContractAddress =
+  process.env.NEXT_PUBLIC_CONTRACT_ADDRESS &&
+  /^0x[a-fA-F0-9]{40}$/.test(process.env.NEXT_PUBLIC_CONTRACT_ADDRESS)
+    ? process.env.NEXT_PUBLIC_CONTRACT_ADDRESS
+    : DEFAULT_CONTRACT_ADDRESS
+
+export const CONTRACT_ADDRESS = resolvedContractAddress as `0x${string}`
 
 /**
- * HomeAutomation Contract ABI
- * Generated from HomeAutomation.sol - includes all functions and events
+ * ABI kept intentionally scoped to functions/events used by the current frontend.
  */
 export const CONTRACT_ABI = [
   {
-    type: 'constructor',
-    inputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
     type: 'function',
-    name: 'DEFAULT_ADMIN_ROLE',
+    name: 'roomCount',
     inputs: [],
-    outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
+    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
     stateMutability: 'view',
   },
   {
     type: 'function',
-    name: 'GUEST_ROLE',
-    inputs: [],
-    outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
+    name: 'rooms',
+    inputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    outputs: [
+      { name: 'name', type: 'string', internalType: 'string' },
+      { name: 'espIP', type: 'string', internalType: 'string' },
+      { name: 'deviceCount', type: 'uint256', internalType: 'uint256' },
+      { name: 'exists', type: 'bool', internalType: 'bool' },
+    ],
     stateMutability: 'view',
   },
   {
     type: 'function',
-    name: 'ROOM_ADMIN_ROLE',
-    inputs: [],
-    outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
+    name: 'getRoomInfo',
+    inputs: [{ name: '_rId', type: 'uint256', internalType: 'uint256' }],
+    outputs: [
+      { name: 'name', type: 'string', internalType: 'string' },
+      { name: 'espIP', type: 'string', internalType: 'string' },
+      { name: 'deviceCount', type: 'uint256', internalType: 'uint256' },
+      { name: 'exists', type: 'bool', internalType: 'bool' },
+    ],
     stateMutability: 'view',
   },
   {
     type: 'function',
-    name: 'SUPER_ADMIN_ROLE',
-    inputs: [],
-    outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    name: 'accessRules',
+    name: 'getDeviceInfo',
     inputs: [
-      { name: '', type: 'uint256', internalType: 'uint256' },
-      { name: '', type: 'address', internalType: 'address' },
+      { name: '_rId', type: 'uint256', internalType: 'uint256' },
+      { name: '_dId', type: 'uint256', internalType: 'uint256' },
     ],
     outputs: [
-      { name: 'fromTimestamp', type: 'uint256', internalType: 'uint256' },
-      { name: 'toTimestamp', type: 'uint256', internalType: 'uint256' },
-      { name: 'isActive', type: 'bool', internalType: 'bool' },
+      { name: 'name', type: 'string', internalType: 'string' },
+      { name: 'pinNo', type: 'uint256', internalType: 'uint256' },
+      { name: 'dType', type: 'uint8', internalType: 'enum AdvancedHomeAutomation.DeviceType' },
+      { name: 'value', type: 'uint256', internalType: 'uint256' },
+      { name: 'exists', type: 'bool', internalType: 'bool' },
     ],
     stateMutability: 'view',
   },
   {
     type: 'function',
-    name: 'addSuperAdmin',
-    inputs: [{ name: 'newAdmin', type: 'address', internalType: 'address' }],
+    name: 'getDeviceStatus',
+    inputs: [
+      { name: '_rId', type: 'uint256', internalType: 'uint256' },
+      { name: '_dId', type: 'uint256', internalType: 'uint256' },
+    ],
+    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    stateMutability: 'view',
+  },
+  {
+    type: 'function',
+    name: 'operateDevice',
+    inputs: [
+      { name: '_roomId', type: 'uint256', internalType: 'uint256' },
+      { name: '_deviceId', type: 'uint256', internalType: 'uint256' },
+      { name: '_value', type: 'uint256', internalType: 'uint256' },
+    ],
     outputs: [],
     stateMutability: 'nonpayable',
   },
@@ -95,53 +108,17 @@ export const CONTRACT_ABI = [
   },
   {
     type: 'function',
-    name: 'getDeviceStatus',
+    name: 'grantRole',
     inputs: [
-      { name: '_rId', type: 'uint256', internalType: 'uint256' },
-      { name: '_dId', type: 'uint256', internalType: 'uint256' },
-    ],
-    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    name: 'getDeviceInfo',
-    inputs: [
-      { name: '_rId', type: 'uint256', internalType: 'uint256' },
-      { name: '_dId', type: 'uint256', internalType: 'uint256' },
-    ],
-    outputs: [
-      { name: 'name', type: 'string', internalType: 'string' },
-      { name: 'pinNo', type: 'uint256', internalType: 'uint256' },
-      { name: 'dType', type: 'uint8', internalType: 'enum AdvancedHomeAutomation.DeviceType' },
-      { name: 'value', type: 'uint256', internalType: 'uint256' },
-      { name: 'exists', type: 'bool', internalType: 'bool' },
-    ],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    name: 'getRoleAdmin',
-    inputs: [{ name: 'role', type: 'bytes32', internalType: 'bytes32' }],
-    outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
-    stateMutability: 'view',
-  },
-  {
-    type: 'function',
-    name: 'grantAccess',
-    inputs: [
-      { name: '_roomId', type: 'uint256', internalType: 'uint256' },
-      { name: '_user', type: 'address', internalType: 'address' },
-      { name: '_start', type: 'uint256', internalType: 'uint256' },
-      { name: '_end', type: 'uint256', internalType: 'uint256' },
-      { name: '_role', type: 'bytes32', internalType: 'bytes32' },
+      { name: 'role', type: 'bytes32', internalType: 'bytes32' },
+      { name: 'account', type: 'address', internalType: 'address' },
     ],
     outputs: [],
     stateMutability: 'nonpayable',
   },
   {
     type: 'function',
-    name: 'grantRole',
+    name: 'revokeRole',
     inputs: [
       { name: 'role', type: 'bytes32', internalType: 'bytes32' },
       { name: 'account', type: 'address', internalType: 'address' },
@@ -161,129 +138,24 @@ export const CONTRACT_ABI = [
   },
   {
     type: 'function',
-    name: 'operateDevice',
-    inputs: [
-      { name: '_roomId', type: 'uint256', internalType: 'uint256' },
-      { name: '_deviceId', type: 'uint256', internalType: 'uint256' },
-      { name: '_value', type: 'uint256', internalType: 'uint256' },
-    ],
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    name: 'removeSuperAdmin',
-    inputs: [{ name: 'admin', type: 'address', internalType: 'address' }],
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    name: 'renounceRole',
-    inputs: [
-      { name: 'role', type: 'bytes32', internalType: 'bytes32' },
-      { name: 'callerConfirmation', type: 'address', internalType: 'address' },
-    ],
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    name: 'revokeAccess',
-    inputs: [
-      { name: '_roomId', type: 'uint256', internalType: 'uint256' },
-      { name: '_user', type: 'address', internalType: 'address' },
-      { name: '_role', type: 'bytes32', internalType: 'bytes32' },
-    ],
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    name: 'revokeRole',
-    inputs: [
-      { name: 'role', type: 'bytes32', internalType: 'bytes32' },
-      { name: 'account', type: 'address', internalType: 'address' },
-    ],
-    outputs: [],
-    stateMutability: 'nonpayable',
-  },
-  {
-    type: 'function',
-    name: 'roomCount',
+    name: 'SUPER_ADMIN_ROLE',
     inputs: [],
-    outputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
+    outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
     stateMutability: 'view',
   },
   {
     type: 'function',
-    name: 'rooms',
-    inputs: [{ name: '', type: 'uint256', internalType: 'uint256' }],
-    outputs: [
-      { name: 'name', type: 'string', internalType: 'string' },
-      { name: 'espIP', type: 'string', internalType: 'string' },
-      { name: 'deviceCount', type: 'uint256', internalType: 'uint256' },
-      { name: 'exists', type: 'bool', internalType: 'bool' },
-    ],
+    name: 'ROOM_ADMIN_ROLE',
+    inputs: [],
+    outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
     stateMutability: 'view',
   },
   {
     type: 'function',
-    name: 'supportsInterface',
-    inputs: [{ name: 'interfaceId', type: 'bytes4', internalType: 'bytes4' }],
-    outputs: [{ name: '', type: 'bool', internalType: 'bool' }],
+    name: 'GUEST_ROLE',
+    inputs: [],
+    outputs: [{ name: '', type: 'bytes32', internalType: 'bytes32' }],
     stateMutability: 'view',
-  },
-  {
-    type: 'event',
-    name: 'AccessUpdated',
-    inputs: [
-      { name: 'roomId', type: 'uint256', indexed: true, internalType: 'uint256' },
-      { name: 'user', type: 'address', indexed: true, internalType: 'address' },
-      { name: 'from', type: 'uint256', indexed: false, internalType: 'uint256' },
-      { name: 'to', type: 'uint256', indexed: false, internalType: 'uint256' },
-      { name: 'role', type: 'bytes32', indexed: false, internalType: 'bytes32' },
-    ],
-    anonymous: false,
-  },
-  {
-    type: 'event',
-    name: 'RoleAdminChanged',
-    inputs: [
-      { name: 'role', type: 'bytes32', indexed: true, internalType: 'bytes32' },
-      { name: 'previousAdminRole', type: 'bytes32', indexed: true, internalType: 'bytes32' },
-      { name: 'newAdminRole', type: 'bytes32', indexed: true, internalType: 'bytes32' },
-    ],
-    anonymous: false,
-  },
-  {
-    type: 'event',
-    name: 'RoleGranted',
-    inputs: [
-      { name: 'role', type: 'bytes32', indexed: true, internalType: 'bytes32' },
-      { name: 'account', type: 'address', indexed: true, internalType: 'address' },
-      { name: 'sender', type: 'address', indexed: true, internalType: 'address' },
-    ],
-    anonymous: false,
-  },
-  {
-    type: 'event',
-    name: 'RoleRevoked',
-    inputs: [
-      { name: 'role', type: 'bytes32', indexed: true, internalType: 'bytes32' },
-      { name: 'account', type: 'address', indexed: true, internalType: 'address' },
-      { name: 'sender', type: 'address', indexed: true, internalType: 'address' },
-    ],
-    anonymous: false,
-  },
-  {
-    type: 'event',
-    name: 'RoomCreated',
-    inputs: [
-      { name: 'roomId', type: 'uint256', indexed: true, internalType: 'uint256' },
-      { name: 'name', type: 'string', indexed: false, internalType: 'string' },
-    ],
-    anonymous: false,
   },
   {
     type: 'event',
@@ -296,38 +168,35 @@ export const CONTRACT_ABI = [
     anonymous: false,
   },
   {
-    type: 'error',
-    name: 'AccessControlBadConfirmation',
-    inputs: [],
+    type: 'event',
+    name: 'RoomRemoved',
+    inputs: [{ name: 'roomId', type: 'uint256', indexed: true, internalType: 'uint256' }],
+    anonymous: false,
   },
   {
-    type: 'error',
-    name: 'AccessControlUnauthorizedAccount',
+    type: 'event',
+    name: 'DeviceRemoved',
     inputs: [
-      { name: 'account', type: 'address', internalType: 'address' },
-      { name: 'neededRole', type: 'bytes32', internalType: 'bytes32' },
+      { name: 'roomId', type: 'uint256', indexed: true, internalType: 'uint256' },
+      { name: 'deviceId', type: 'uint256', indexed: true, internalType: 'uint256' },
     ],
+    anonymous: false,
   },
-] as const;
+] as const
 
-/**
- * Role identifiers for access control
- */
 export const ROLES = {
-  DEFAULT_ADMIN_ROLE: '0x0000000000000000000000000000000000000000000000000000000000000000',
-  SUPER_ADMIN_ROLE: '0x8f1d24e5f52fc23e6a9e51c0b72c5f4f5d4d5d5d5d5d5d5d5d5d5d5d5d5d5d5',
-  ROOM_ADMIN_ROLE: '0x6c9f3cd14d9b5c7e3a8f1d4b6e9a2c5d8f1a4b7c9e2d5f8a1b4c7d9e2f5a8b',
-  GUEST_ROLE: '0x3b1b8e4d6f7a9c2e5d8a1f4b7c9e2d5a8f1b4c7d9e2f5a8b1c4d7e9f2a5c8e',
-} as const;
+  DEFAULT_ADMIN_ROLE:
+    '0x0000000000000000000000000000000000000000000000000000000000000000',
+  SUPER_ADMIN_ROLE:
+    '0x7613a25ecc738585a232ad50a301178f12b3ba8887d13e138b523c4269c47689',
+  ROOM_ADMIN_ROLE:
+    '0xd447a3c4dd90ef7c021891ef063fd5f30240ff1a4b31f6c1767ba066aaf86dca',
+  GUEST_ROLE:
+    '0xb6a185f76b0ff8a0f9708ffce8e6b63ce2df58f28ad66179fb4e230e98d0a52f',
+} as const
 
-/**
- * API Configuration
- */
 export const API_CONFIG = {
-  // Cloudflare Tunnel URL for blockchain RPC
-  RPC_URL: 'https://rpc.jainhardik06.in',
-  // Fallback for local development
-  RPC_URL_LOCAL: 'http://localhost:8545',
-  // MQTT for hardware communication (local network only)
-  MQTT_BROKER: 'mqtt://192.168.1.XX:1883', // Update with your Pi's IP
-} as const;
+  RPC_URL: process.env.NEXT_PUBLIC_RPC_URL || 'http://127.0.0.1:8545',
+  RPC_URL_LOCAL: process.env.NEXT_PUBLIC_RPC_FALLBACK || 'http://localhost:8545',
+  MIDDLEWARE_URL: process.env.NEXT_PUBLIC_MIDDLEWARE_URL || '',
+} as const

@@ -1,9 +1,8 @@
 import { parseAbiItem } from 'viem'
 
-// Non-Indexed StateChanged Event ABI (96-byte packed data)
-// Format: roomId (32 bytes) + deviceId (32 bytes) + newValue (32 bytes)
+// Solidity event signature from AdvancedHomeAutomation.
 export const STATE_CHANGED_EVENT = parseAbiItem(
-  'event StateChanged(bytes data)'
+  'event StateChanged(uint256 roomId, uint256 deviceId, uint256 newValue)'
 )
 
 export interface DeviceCommand {
@@ -13,9 +12,7 @@ export interface DeviceCommand {
 }
 
 /**
- * Decodes the 96-byte packed data from StateChanged event
- * This follows the "Zero-Index" architecture where all parameters
- * are packed into a single contiguous data block to avoid ABI mismatches
+ * Decodes raw event data payload for the non-indexed StateChanged fields.
  */
 export function decodeStateChangedEvent(data: string): DeviceCommand {
   // Remove '0x' prefix and split into 32-byte (64 hex char) chunks

@@ -4,7 +4,9 @@
  */
 
 import { useEffect, useState } from 'react'
-import { useAccount } from 'wagmi'
+import { usePublicClient } from 'wagmi'
+import { CONTRACT_ABI, CONTRACT_ADDRESS } from '@/lib/constants'
+import { homeChain } from '@/lib/blockchain'
 
 export interface ContractRoom {
   id: number
@@ -19,7 +21,7 @@ export interface ContractRoom {
  * This replaces the hardcoded ROOMS array
  */
 export function useContractRooms() {
-  const { isConnected } = useAccount()
+  const publicClient = usePublicClient({ chainId: homeChain.id })
   const [rooms, setRooms] = useState<ContractRoom[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -27,26 +29,45 @@ export function useContractRooms() {
   useEffect(() => {
     const fetchRooms = async () => {
       try {
-        if (!isConnected) {
+        setLoading(true)
+        setError(null)
+
+        if (!publicClient) {
           setRooms([])
           setLoading(false)
           return
         }
 
-        // TODO: Implement actual contract call using Wagmi
-        // const roomCount = await readContract({
-        //   address: CONTRACT_ADDRESS,
-        //   abi: CONTRACT_ABI,
-        //   functionName: 'roomCount',
-        // })
+        const roomCount = await publicClient.readContract({
+          address: CONTRACT_ADDRESS,
+          abi: CONTRACT_ABI,
+          functionName: 'roomCount',
+        })
 
-        // For now, fetch from API endpoint (when backend is ready)
-        // const response = await fetch('/api/rooms')
-        // const data = await response.json()
-        // setRooms(data)
+        const nextRooms: ContractRoom[] = []
+        for (let roomId = 1; roomId <= Number(roomCount); roomId++) {
+          const roomInfo = await publicClient.readContract({
+            address: CONTRACT_ADDRESS,
+            abi: CONTRACT_ABI,
+            functionName: 'getRoomInfo',
+            args: [BigInt(roomId)],
+          })
 
-        // Initialize empty for now
-        setRooms([])
+          const [name, espIP, deviceCount, exists] = roomInfo as [string, string, bigint, boolean]
+          if (!exists) {
+            continue
+          }
+
+          nextRooms.push({
+            id: roomId,
+            name,
+            espIP,
+            deviceCount: Number(deviceCount),
+            exists,
+          })
+        }
+
+        setRooms(nextRooms)
         setLoading(false)
       } catch (err) {
         console.error('Failed to fetch rooms:', err)
@@ -56,7 +77,7 @@ export function useContractRooms() {
     }
 
     fetchRooms()
-  }, [isConnected])
+  }, [publicClient])
 
   return { rooms, loading, error }
 }

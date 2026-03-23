@@ -13,17 +13,9 @@ import { defineChain } from 'viem';
  * NEXT_PUBLIC_RPC_FALLBACK=http://localhost:8545 (for local dev only)
  */
 
-// Get RPC URL from environment - ngrok tunnel is ALWAYS primary
+// Resolve RPC URL from environment first, then fall back to local node.
 const getRpcUrl = (): string => {
-  // ALWAYS try ngrok first (production tunnel bridge)
-  const primaryUrl = 'https://racheal-uninvoked-jeneva.ngrok-free.dev'
-  
-  // Environment override (if user provides custom tunnel)
-  const envUrl = typeof window !== 'undefined' 
-    ? process.env.NEXT_PUBLIC_RPC_URL
-    : process.env.NEXT_PUBLIC_RPC_URL
-  
-  return envUrl || primaryUrl
+  return process.env.NEXT_PUBLIC_RPC_URL || 'http://127.0.0.1:8545'
 }
 
 export const homeChain = defineChain({
@@ -70,10 +62,10 @@ export const homeChainMetaMaskConfig = {
     symbol: 'tBNB',
     decimals: 18,
   },
-  // Ngrok tunnel bridge
+  // Ngrok/local RPC bridge
   rpcUrls: [
     process.env.NEXT_PUBLIC_RPC_URL ||
-      'https://racheal-uninvoked-jeneva.ngrok-free.dev',
+      'http://127.0.0.1:8545',
   ],
   blockExplorerUrls: [],
 };
@@ -85,8 +77,8 @@ export const CONTRACT_FUNCTIONS = {
   OPERATE_DEVICE: 'operateDevice',
   CREATE_ROOM: 'createRoom',
   DEFINE_DEVICE: 'defineDevice',
-  GRANT_ACCESS: 'grantAccess',
-  REVOKE_ACCESS: 'revokeAccess',
+  GRANT_ROLE: 'grantRole',
+  REVOKE_ROLE: 'revokeRole',
   GET_DEVICE_STATUS: 'getDeviceStatus',
   GET_ROOM_COUNT: 'roomCount',
 } as const;

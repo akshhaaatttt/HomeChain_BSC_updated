@@ -56,11 +56,12 @@ export function useDeviceControl() {
   };
 
   /**
-   * Grant temporary access to a user for a room
-   * @param roomId - Room ID
+    * Grant role-based access to a user.
+    * Note: current Solidity contract uses AccessControl role grants only.
+    * @param roomId - Room ID (kept for API compatibility, not used on-chain)
    * @param userAddress - Wallet address of the user
-   * @param startTime - Unix timestamp when access starts
-   * @param endTime - Unix timestamp when access ends
+    * @param startTime - Reserved for compatibility (not used)
+    * @param endTime - Reserved for compatibility (not used)
    * @param roleBytes - Role identifier (e.g., GUEST_ROLE or ROOM_ADMIN_ROLE)
    */
   const grantAccess = async (
@@ -80,8 +81,8 @@ export function useDeviceControl() {
       writeContract({
         address: CONTRACT_ADDRESS as `0x${string}`,
         abi: CONTRACT_ABI,
-        functionName: 'grantAccess',
-        args: [BigInt(roomId), userAddress as `0x${string}`, BigInt(startTime), BigInt(endTime), roleBytes],
+        functionName: 'grantRole',
+        args: [roleBytes, userAddress as `0x${string}`],
       } as any);
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));
@@ -91,7 +92,7 @@ export function useDeviceControl() {
   };
 
   /**
-   * Revoke access for a user from a room
+    * Revoke a previously granted role for a user.
    */
   const revokeAccess = async (roomId: number, userAddress: string, roleBytes: `0x${string}`) => {
     try {
@@ -104,8 +105,8 @@ export function useDeviceControl() {
       writeContract({
         address: CONTRACT_ADDRESS as `0x${string}`,
         abi: CONTRACT_ABI,
-        functionName: 'revokeAccess',
-        args: [BigInt(roomId), userAddress as `0x${string}`, roleBytes],
+        functionName: 'revokeRole',
+        args: [roleBytes, userAddress as `0x${string}`],
       } as any)
     } catch (err) {
       const error = err instanceof Error ? err : new Error(String(err));

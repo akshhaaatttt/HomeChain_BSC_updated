@@ -4,7 +4,11 @@
  */
 
 import { useAccount } from 'wagmi'
-import { CONTRACT_ROLES, ROLE_PERMISSIONS } from '@/lib/deviceConstants'
+import { useEffect, useState } from 'react'
+import { ROLE_PERMISSIONS } from '@/lib/deviceConstants'
+import { CONTRACT_ABI, CONTRACT_ADDRESS } from '@/lib/constants'
+import { usePublicClient } from 'wagmi'
+import { homeChain } from '@/lib/blockchain'
 
 export interface UserRoles {
   isSuperAdmin: boolean
@@ -22,38 +26,133 @@ export interface UserRoles {
  */
 export function useUserRoles(): UserRoles & { loading: boolean; error?: Error } {
   const { address, isConnected } = useAccount()
+  const publicClient = usePublicClient({ chainId: homeChain.id })
 
-  // For now, return a default structure
-  // In production, this would call contract.hasRole() for each role
-  const isSuperAdmin = false
-  const isRoomAdmin = false
-  const isGuest = false
+  const [state, setState] = useState<{
+    loading: boolean
+    error?: Error
+    roles: UserRoles
+  }>({
+    loading: true,
+    roles: {
+      isSuperAdmin: false,
+      isRoomAdmin: false,
+      isGuest: false,
+      canControl: false,
+      canGrantAccess: false,
+      canCreateRooms: false,
+      role: 'NONE',
+    },
+  })
 
-  const role: UserRoles['role'] = isSuperAdmin
-    ? 'SUPER_ADMIN'
-    : isRoomAdmin
-      ? 'ROOM_ADMIN'
-      : isGuest
-        ? 'GUEST'
-        : 'NONE'
+  useEffect(() => {
+    const loadRoles = async () => {
+      if (!isConnected || !address || !publicClient) {
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          roles: {
+            isSuperAdmin: false,
+            isRoomAdmin: false,
+            isGuest: false,
+            canControl: false,
+            canGrantAccess: false,
+            canCreateRooms: false,
+            role: 'NONE',
+          },
+          error: undefined,
+        }))
+        return
+      }
 
-  const permissions = ROLE_PERMISSIONS[role as keyof typeof ROLE_PERMISSIONS] || {
-    canControl: false,
-    canGrantAccess: false,
-    canCreateRooms: false,
-    requiresTimeWindow: true,
-  }
+      try {
+        setState((prev) => ({ ...prev, loading: true, error: undefined }))
+
+        const [superAdminRole, roomAdminRole, guestRole] = await Promise.all([
+          publicClient.readContract({
+            address: CONTRACT_ADDRESS,
+            abi: CONTRACT_ABI,
+            functionName: 'SUPER_ADMIN_ROLE',
+          }),
+          publicClient.readContract({
+            address: CONTRACT_ADDRESS,
+            abi: CONTRACT_ABI,
+            functionName: 'ROOM_ADMIN_ROLE',
+          }),
+          publicClient.readContract({
+            address: CONTRACT_ADDRESS,
+            abi: CONTRACT_ABI,
+            functionName: 'GUEST_ROLE',
+          }),
+        ])
+
+        const [isSuperAdmin, isRoomAdmin, isGuest] = await Promise.all([
+          publicClient.readContract({
+            address: CONTRACT_ADDRESS,
+            abi: CONTRACT_ABI,
+            functionName: 'hasRole',
+            args: [superAdminRole, address],
+          }),
+          publicClient.readContract({
+            address: CONTRACT_ADDRESS,
+            abi: CONTRACT_ABI,
+            functionName: 'hasRole',
+            args: [roomAdminRole, address],
+          }),
+          publicClient.readContract({
+            address: CONTRACT_ADDRESS,
+            abi: CONTRACT_ABI,
+            functionName: 'hasRole',
+            args: [guestRole, address],
+          }),
+        ])
+
+        const role: UserRoles['role'] = isSuperAdmin
+          ? 'SUPER_ADMIN'
+          : isRoomAdmin
+            ? 'ROOM_ADMIN'
+            : isGuest
+              ? 'GUEST'
+              : 'NONE'
+
+        const permissions = ROLE_PERMISSIONS[role as keyof typeof ROLE_PERMISSIONS] || {
+          canControl: false,
+          canGrantAccess: false,
+          canCreateRooms: false,
+          requiresTimeWindow: true,
+        }
+
+        setState({
+          loading: false,
+          error: undefined,
+          roles: {
+            isSuperAdmin: Boolean(isSuperAdmin),
+            isRoomAdmin: Boolean(isRoomAdmin),
+            isGuest: Boolean(isGuest),
+            canControl: permissions.canControl,
+            canGrantAccess: permissions.canGrantAccess,
+            canCreateRooms: permissions.canCreateRooms,
+            role,
+          },
+        })
+      } catch (error) {
+        const normalizedError =
+          error instanceof Error ? error : new Error('Failed to read user roles')
+        setState((prev) => ({
+          ...prev,
+          loading: false,
+          error: normalizedError,
+        }))
+      }
+    }
+
+    loadRoles()
+  }, [address, isConnected, publicClient])
 
   return {
-    isSuperAdmin,
-    isRoomAdmin,
-    isGuest,
-    canControl: permissions.canControl,
-    canGrantAccess: permissions.canGrantAccess,
-    canCreateRooms: permissions.canCreateRooms,
-    role,
-    loading: !isConnected,
-    error: undefined,
+    ...state.roles,
+    loading: state.loading,
+    error: state.error,
   }
 }
 
